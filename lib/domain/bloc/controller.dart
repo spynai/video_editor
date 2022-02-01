@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
-import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+
+import 'package:flutter_ffmpeg/ffmpeg_execution.dart';
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -225,8 +224,8 @@ class VideoEditorController extends ChangeNotifier {
   Future<void> dispose() async {
     if (_video.value.isPlaying) await _video.pause();
     _video.removeListener(_videoListener);
-    final executions = await FFmpegKit.listSessions();
-    if (executions.length > 0) await FFmpegKit.cancel();
+//    final executions = await FFmpegKit.listSessions();
+//    if (executions.length > 0) await FFmpegKit.cancel();
     _video.dispose();
     super.dispose();
   }
@@ -369,7 +368,7 @@ class VideoEditorController extends ChangeNotifier {
   //VIDEO METADATA//
   //--------------//
 
-  /// Return metadata of the video file
+  /* Return metadata of the video file
   Future<void> getMetaData(
       {required void Function(Map<dynamic, dynamic>? metadata)
           onCompleted}) async {
@@ -377,7 +376,7 @@ class VideoEditorController extends ChangeNotifier {
       final information = session.getMediaInformation();
       onCompleted(information?.getAllProperties());
     });
-  }
+  } */
 
   //------------//
   //VIDEO EXPORT//
@@ -399,13 +398,13 @@ class VideoEditorController extends ChangeNotifier {
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<void> exportVideo({
-    required void Function(File? file) onCompleted,
+    required void Function(File file) onCompleted,
     String? name,
     String? outDir,
     String format = "mp4",
     double scale = 1.0,
     String? customInstruction,
-    void Function(Statistics)? onProgress,
+    void Function(dynamic)? onProgress,
     VideoExportPreset preset = VideoExportPreset.none,
   }) async {
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
@@ -441,22 +440,8 @@ class VideoEditorController extends ChangeNotifier {
     //------------------//
     //PROGRESS CALLBACKS//
     //------------------//
-    await FFmpegKit.executeAsync(
-      execute,
-      (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
-
-        print(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
-      },
-      null,
-      onProgress != null ? onProgress : null,
-    );
+    await FlutterFFmpeg().execute(execute);
+    onCompleted(File(outputPath));
   }
 
   String _getPreset(VideoExportPreset preset) {
@@ -533,7 +518,7 @@ class VideoEditorController extends ChangeNotifier {
     String format = "jpg",
     double scale = 1.0,
     int quality = 100,
-    void Function(Statistics)? onProgress,
+    void Function(dynamic)? onProgress,
   }) async {
     // final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
@@ -571,21 +556,7 @@ class VideoEditorController extends ChangeNotifier {
     //------------------//
     //PROGRESS CALLBACKS//
     //------------------//
-    await FFmpegKit.executeAsync(
-      execute,
-      (session) async {
-        final state =
-            FFmpegKitConfig.sessionStateToString(await session.getState());
-        final code = await session.getReturnCode();
-        final failStackTrace = await session.getFailStackTrace();
-
-        print(
-            "FFmpeg process exited with state $state and return code $code.${(failStackTrace == null) ? "" : "\\n" + failStackTrace}");
-
-        onCompleted(code?.isValueSuccess() == true ? File(outputPath) : null);
-      },
-      null,
-      onProgress != null ? onProgress : null,
-    );
+    var code = await FlutterFFmpeg().execute(execute);
+    onCompleted(File(outputPath));
   }
 }
