@@ -4,6 +4,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -64,7 +65,9 @@ class VideoEditorController extends ChangeNotifier {
     TrimSliderStyle? trimStyle,
     CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
-  })  : _video = VideoPlayerController.file(file),
+  })  : _video = kIsWeb
+            ? VideoPlayerController.network(file.path)
+            : VideoPlayerController.file(file),
         this._maxDuration = maxDuration ?? Duration.zero,
         this.cropStyle = cropStyle ?? CropGridStyle(),
         this.coverStyle = coverStyle ?? CoverSelectionStyle(),
