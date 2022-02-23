@@ -10,7 +10,7 @@ environment:
   flutter: ">=1.17.0"
 
 dependencies:
-  flutter_ffmpeg: ^0.4.2
+  ffmpeg_kit_flutter_min_gpl: 4.5.1-LTS
   flutter:
     sdk: flutter
   path: ^1.8.0

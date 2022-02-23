@@ -400,7 +400,7 @@ class _VideoEditorState extends State<VideoEditor> {
       alignment: Alignment.bottomCenter,
       child: SwipeTransition(
         visible: _exported,
-        // direction: SwipeDirection.fromBottom,
+        direction: SwipeDirection.fromBottom,
         child: Container(
           height: height,
           width: double.infinity,
