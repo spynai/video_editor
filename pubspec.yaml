@@ -17,7 +17,7 @@ dependencies:
   path_provider: ^2.0.2
   video_player:
     git:
-      url: https://sabaridev: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@github.com/spynai/ios_video_player.git
+      url: https://sabaridev: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@github.com/spynai/ios_video_player.git
   video_thumbnail: ^0.4.3
 
 dev_dependencies:
