@@ -4,6 +4,7 @@ import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_kit_flutter_web/ffmpegkitweb.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
@@ -437,8 +438,9 @@ class VideoEditorController extends ChangeNotifier {
     //----------------//
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
-    final String filter =
-        filters.isNotEmpty && isFiltersEnabled ? "-filter:v " + filters.join(",") : "";
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
     final String execute =
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
@@ -461,6 +463,69 @@ class VideoEditorController extends ChangeNotifier {
       null,
       onProgress != null ? onProgress : null,
     );
+  }
+
+  //------------//
+  //VIDEO EXPORT//
+  //------------//
+
+  ///Export the video using this edition parameters and return a `File`.
+  ///
+  ///If the [name] is `null`, then it uses this video filename.
+  ///
+  ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
+  ///
+  ///The [format] of the video to be exported, by default `mp4`.
+  ///
+  ///The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
+  ///
+  ///The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
+  ///
+  ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
+  ///A slower preset will provide better compression (compression is quality per filesize).
+  ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
+  Future<void> exportVideoWeb({
+    required void Function(File? file) onCompleted,
+    String? name,
+    String? outDir,
+    String format = "mp4",
+    double scale = 1.0,
+    String? customInstruction,
+    void Function(Statistics)? onProgress,
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final String videoPath = file.path;
+    if (name == null) name = path.basenameWithoutExtension(videoPath);
+    print("minTrim $minTrim");
+    print("maxTrim $maxTrim");
+    //-----------------//
+    //CALCULATE FILTERS//
+    //-----------------//
+    final String gif = format != "gif" ? "" : "fps=10 -loop 0";
+    final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
+        ? "-ss $_trimStart -to $_trimEnd"
+        : "";
+    final String crop =
+        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    print("crop");
+    print(crop);
+    final String rotation =
+        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+
+    //------------------//
+    //PROGRESS CALLBACKS//
+    //------------------//
+    dynamic value = await Ffmpegkitweb.trimTheSelectedVideo(
+        name, file.path, (minTrim * 10).toString(), (maxTrim * 10).toString());
+    print("output");
+    String result = value as String;
+    print("converted url ${result}");
+    if (result.isNotEmpty) {
+      onCompleted(File(result));
+    }
   }
 
   String _getPreset(VideoExportPreset preset) {
