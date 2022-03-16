@@ -4,7 +4,8 @@ import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
-import 'package:ffmpeg_kit_flutter_web/ffmpegkitweb.dart';
+import 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web.dart'
+    if (dart.library.html) '';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';

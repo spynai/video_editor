@@ -19,13 +19,13 @@ dependencies:
     git:
       url: https://github.com/spynai/ios_video_player.git
   video_thumbnail: ^0.4.3
+  ffmpeg_kit_flutter:
+    path: ../ffmpeg-kit/flutter/flutter
   # ffmpeg_kit_flutter_web:
-    # path: ../ffmpeg-kit/flutter/ffmpeg_kit_flutter_web
-  ffmpeg_kit_flutter_web:
-    git: 
-      url: https://github.com/spynai/ffmpeg-kit.git
-      ref: testingWebDart
-      path: flutter/ffmpeg_kit_flutter_web
+  #   git: 
+  #     url: https://github.com/spynai/ffmpeg-kit.git
+  #     ref: testingWebDart
+  #     path: flutter/ffmpeg_kit_flutter_web
 
 dev_dependencies:
   flutter_test:
