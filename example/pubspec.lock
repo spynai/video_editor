@@ -95,9 +95,11 @@ packages:
   ffmpeg_kit_flutter_web:
     dependency: transitive
     description:
-      path: "../../ffmpeg-kit/flutter/ffmpeg_kit_flutter_web"
-      relative: true
-    source: path
+      path: "flutter/ffmpeg_kit_flutter_web"
+      ref: mobileissue
+      resolved-ref: a62a7d022183b56d94c9a808e07a051ea7769fa1
+      url: "https://github.com/spynai/ffmpeg-kit.git"
+    source: git
     version: "2.0.3"
   file:
     dependency: transitive
