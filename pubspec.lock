@@ -64,13 +64,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.1.2"
-  ffmpeg_kit_flutter:
-    dependency: "direct main"
-    description:
-      path: "../ffmpeg-kit/flutter/flutter"
-      relative: true
-    source: path
-    version: "4.5.1"
   ffmpeg_kit_flutter_min_gpl:
     dependency: "direct main"
     description:
@@ -86,7 +79,7 @@ packages:
     source: hosted
     version: "0.2.1"
   ffmpeg_kit_flutter_web:
-    dependency: transitive
+    dependency: "direct main"
     description:
       path: "../ffmpeg-kit/flutter/ffmpeg_kit_flutter_web"
       relative: true
