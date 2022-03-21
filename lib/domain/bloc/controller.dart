@@ -516,11 +516,22 @@ class VideoEditorController extends ChangeNotifier {
     final String scaleInstruction =
         scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
 
+    //----------------//
+    //VALIDATE FILTERS//
+    //----------------//
+    final List<String> filters = [crop, scaleInstruction, rotation, gif];
+    filters.removeWhere((item) => item.isEmpty);
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
+    final String execute =
+        "${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y output.mp4";
+
     //------------------//
     //PROGRESS CALLBACKS//
     //------------------//
-    dynamic value = await Ffmpegkitweb.trimTheSelectedVideo(
-        name, file.path, (minTrim * 10).toString(), (maxTrim * 10).toString());
+    dynamic value =
+        await Ffmpegkitweb.executeAsync(name, file.path, execute, 'output.mp4');
     print("output");
     String result = value as String;
     print("converted url ${result}");
