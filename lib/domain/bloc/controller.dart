@@ -486,7 +486,7 @@ class VideoEditorController extends ChangeNotifier {
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
   Future<void> exportVideoWeb({
-    required void Function(File? file) onCompleted,
+    required void Function(File? file, String name) onCompleted,
     String? name,
     String? outDir,
     String format = "mp4",
@@ -532,11 +532,10 @@ class VideoEditorController extends ChangeNotifier {
     //------------------//
     dynamic value =
         await Ffmpegkitweb.executeAsync(name, file.path, execute, 'output.mp4');
-    print("output");
     String result = value as String;
-    print("converted url ${result}");
+    print("output path ${result}");
     if (result.isNotEmpty) {
-      onCompleted(File(result));
+      onCompleted(File(result), name);
     }
   }
 
