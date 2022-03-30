@@ -82,8 +82,8 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/ffmpeg_kit_flutter_web"
-      ref: mobileissue
-      resolved-ref: a62a7d022183b56d94c9a808e07a051ea7769fa1
+      ref: web
+      resolved-ref: "651e94598b244236d7f30ad7daff4b4f9c917b2a"
       url: "https://github.com/spynai/ffmpeg-kit.git"
     source: git
     version: "2.0.3"

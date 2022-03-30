@@ -24,7 +24,7 @@ dependencies:
   ffmpeg_kit_flutter_web:
     git: 
       url: https://github.com/spynai/ffmpeg-kit.git
-      ref: mobileissue
+      ref: web
       path: flutter/ffmpeg_kit_flutter_web
 
 dev_dependencies:
