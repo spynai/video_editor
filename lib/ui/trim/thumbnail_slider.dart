@@ -1,17 +1,21 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web_dummy.dart'
+    if (dart.library.html) 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web.dart';
 
 class ThumbnailSlider extends StatefulWidget {
   ThumbnailSlider({
     required this.controller,
     this.height = 60,
     this.quality = 10,
+    this.width,
   });
 
   ///MAX QUALITY IS 100 - MIN QUALITY IS 0
@@ -19,6 +23,9 @@ class ThumbnailSlider extends StatefulWidget {
 
   ///THUMBNAIL HEIGHT
   final double height;
+
+  ///PAGE Width
+  final double? width;
 
   final VideoEditorController controller;
 
@@ -37,6 +44,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   Size _layout = Size.zero;
   Stream<List<Uint8List>>? _stream;
+  Stream<List<String>>? _streamWeb;
 
   @override
   void initState() {
@@ -89,6 +97,27 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
+  Stream<List<String>> _generateThumbnailsForWeb() async* {
+    print('_generateThumbnailsForWeb');
+    final String path = widget.controller.file.path;
+    final int duration = widget.controller.video.value.duration.inSeconds;
+    final double eachPart = duration / _thumbnails;
+    List<String> temp = List<String>.empty(growable: true);
+    for (int i = 1; i <= _thumbnails; i++) {
+      var frameTimeStamp = eachPart * i;
+      var frameOutputFilename =
+          '${DateTime.now().millisecondsSinceEpoch}frameExtracted.png';
+      dynamic value = await Ffmpegkitweb.executeAsync(
+          "filename.mp4",
+          path,
+          '-ss $frameTimeStamp -frames:v 1 $frameOutputFilename',
+          frameOutputFilename);
+      var result = value as String;
+      temp.add(result);
+      yield temp;
+    }
+  }
+
   Rect _calculateTrimRect() {
     final Offset min = widget.controller.minCrop;
     final Offset max = widget.controller.maxCrop;
@@ -109,60 +138,111 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     return LayoutBuilder(builder: (_, box) {
       final double width = box.maxWidth;
       if (_width != width) {
-        _width = width;
+        _width = kIsWeb ? widget.width! : width;
         _layout = _aspect <= 1.0
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
-        _stream = _generateThumbnails();
+        print("thump nail size $_thumbnails");
+        if (kIsWeb) {
+          _streamWeb = _generateThumbnailsForWeb();
+        } else {
+          _stream = _generateThumbnails();
+        }
         _rect.value = _calculateTrimRect();
       }
 
-      return StreamBuilder(
-        stream: _stream,
-        builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
-          final data = snapshot.data;
-          return snapshot.hasData
-              ? ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.zero,
-                  physics: NeverScrollableScrollPhysics(),
-                  itemCount: data!.length,
-                  itemBuilder: (_, int index) {
-                    return ValueListenableBuilder(
-                      valueListenable: _transform,
-                      builder: (_, TransformData transform, __) {
-                        return CropTransform(
-                          transform: transform,
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: _layout.height,
-                            width: _layout.width,
-                            child: Stack(children: [
-                              Image(
-                                image: MemoryImage(data[index]),
-                                width: _layout.width,
-                                height: _layout.height,
-                                alignment: Alignment.topLeft,
-                              ),
-                              CustomPaint(
-                                size: _layout,
-                                painter: CropGridPainter(
-                                  _rect.value,
-                                  showGrid: false,
-                                  style: widget.controller.cropStyle,
+      return kIsWeb
+          ? StreamBuilder(
+              stream: _streamWeb,
+              builder: (_, AsyncSnapshot<List<String>> snapshot) {
+                final data = snapshot.data;
+                return snapshot.hasData
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: data!.length,
+                        itemBuilder: (_, int index) {
+                          return ValueListenableBuilder(
+                            valueListenable: _transform,
+                            builder: (_, TransformData transform, __) {
+                              return CropTransform(
+                                transform: transform,
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: _layout.height,
+                                  width: _layout.width,
+                                  child: Stack(children: [
+                                    Image(
+                                      image: NetworkImage(data[index]),
+                                      width: _layout.width,
+                                      height: _layout.height,
+                                      alignment: Alignment.topLeft,
+                                    ),
+                                    CustomPaint(
+                                      size: _layout,
+                                      painter: CropGridPainter(
+                                        _rect.value,
+                                        showGrid: false,
+                                        style: widget.controller.cropStyle,
+                                      ),
+                                    ),
+                                  ]),
                                 ),
-                              ),
-                            ]),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                )
-              : SizedBox();
-        },
-      );
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : SizedBox();
+              },
+            )
+          : StreamBuilder(
+              stream: _stream,
+              builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
+                final data = snapshot.data;
+                return snapshot.hasData
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: data!.length,
+                        itemBuilder: (_, int index) {
+                          return ValueListenableBuilder(
+                            valueListenable: _transform,
+                            builder: (_, TransformData transform, __) {
+                              return CropTransform(
+                                transform: transform,
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: _layout.height,
+                                  width: _layout.width,
+                                  child: Stack(children: [
+                                    Image(
+                                      image: MemoryImage(data[index]),
+                                      width: _layout.width,
+                                      height: _layout.height,
+                                      alignment: Alignment.topLeft,
+                                    ),
+                                    CustomPaint(
+                                      size: _layout,
+                                      painter: CropGridPainter(
+                                        _rect.value,
+                                        showGrid: false,
+                                        style: widget.controller.cropStyle,
+                                      ),
+                                    ),
+                                  ]),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : SizedBox();
+              },
+            );
     });
   }
 }

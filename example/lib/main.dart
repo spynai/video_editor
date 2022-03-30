@@ -380,6 +380,7 @@ class _VideoEditorState extends State<VideoEditor> {
                 controller: _controller, margin: EdgeInsets.only(top: 10)),
             controller: _controller,
             height: height,
+            width: 416,
             horizontalMargin: height / 4),
       )
     ];

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
@@ -13,6 +14,7 @@ class TrimSlider extends StatefulWidget {
       required this.controller,
       this.height = 60,
       this.quality = 10,
+      this.width,
       this.horizontalMargin = 0.0,
       this.child})
       : super(key: key);
@@ -22,6 +24,9 @@ class TrimSlider extends StatefulWidget {
 
   ///It is the height of the thumbnails
   final double height;
+
+  ///It is the width of the page
+  final double? width;
 
   ///Essential argument for the functioning of the Widget
   final VideoEditorController controller;
@@ -248,6 +253,7 @@ class _TrimSliderState extends State<TrimSlider>
                             child: ThumbnailSlider(
                                 controller: widget.controller,
                                 height: widget.height,
+                                width: kIsWeb ? widget.width : null,
                                 quality: widget.quality)),
                         if (widget.child != null)
                           Container(
