@@ -99,22 +99,27 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   Stream<List<String>> _generateThumbnailsForWeb() async* {
     print('_generateThumbnailsForWeb');
-    final String path = widget.controller.file.path;
-    final int duration = widget.controller.video.value.duration.inSeconds;
-    final double eachPart = duration / _thumbnails;
-    List<String> temp = List<String>.empty(growable: true);
-    for (int i = 1; i <= _thumbnails; i++) {
-      var frameTimeStamp = eachPart * i;
-      var frameOutputFilename =
-          '${DateTime.now().millisecondsSinceEpoch}frameExtracted.png';
-      dynamic value = await Ffmpegkitweb.executeAsync(
-          "filename.mp4",
-          path,
-          '-ss $frameTimeStamp -frames:v 1 $frameOutputFilename',
-          frameOutputFilename);
-      var result = value as String;
-      temp.add(result);
-      yield temp;
+    try {
+      final String path = widget.controller.file.path;
+      final int duration = widget.controller.video.value.duration.inSeconds;
+      final double eachPart = duration / _thumbnails;
+      List<String> temp = List<String>.empty(growable: true);
+      for (int i = 1; i <= _thumbnails; i++) {
+        var frameTimeStamp = eachPart * i;
+        var frameOutputFilename =
+            '${DateTime.now().millisecondsSinceEpoch}frameExtracted.png';
+        dynamic value = await Ffmpegkitweb.executeAsync(
+            "filename.mp4",
+            path,
+            '-ss $frameTimeStamp -frames:v 1 $frameOutputFilename',
+            frameOutputFilename);
+        var result = value as String;
+        temp.add(result);
+        yield temp;
+      }
+    } catch (e) {
+      print('_generateThumbnailsForWeb error');
+      print(e);
     }
   }
 
