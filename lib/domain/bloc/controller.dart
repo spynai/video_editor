@@ -169,6 +169,8 @@ class VideoEditorController extends ChangeNotifier {
       _preferredCropAspectRatio = value;
       notifyListeners();
     } else if (value >= 0) {
+      // TODO : when switching from a preferred aspect ratio to another it keep reducing the crop size
+
       final length = cropStyle.boundariesLength * 4;
       final videoWidth = videoDimension.width;
       final videoHeight = videoDimension.height;
@@ -398,6 +400,8 @@ class VideoEditorController extends ChangeNotifier {
   ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
   ///A slower preset will provide better compression (compression is quality per filesize).
   ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
+  ///
+  ///Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> exportVideo({
     required void Function(File? file) onCompleted,
     String? name,
@@ -434,8 +438,9 @@ class VideoEditorController extends ChangeNotifier {
     //----------------//
     final List<String> filters = [crop, scaleInstruction, rotation, gif];
     filters.removeWhere((item) => item.isEmpty);
-    final String filter =
-        filters.isNotEmpty && isFiltersEnabled ? "-filter:v " + filters.join(",") : "";
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
     final String execute =
         " -i \'$videoPath\' ${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y $outputPath";
 
@@ -527,6 +532,8 @@ class VideoEditorController extends ChangeNotifier {
   ///The [scale] is `scale=width*scale:height*scale` and reduce or increase cover size.
   ///
   ///The [quality] of the exported image (from 0 to 100)
+  ///
+  ///Set [isFiltersEnabled] to `false` if you do not want to apply any changes
   Future<void> extractCover({
     required void Function(File? file) onCompleted,
     String? name,
@@ -535,6 +542,7 @@ class VideoEditorController extends ChangeNotifier {
     double scale = 1.0,
     int quality = 100,
     void Function(Statistics)? onProgress,
+    bool isFiltersEnabled = true,
   }) async {
     // final FlutterFFmpegConfig _config = FlutterFFmpegConfig();
     final String tempPath = outDir ?? (await getTemporaryDirectory()).path;
@@ -565,8 +573,9 @@ class VideoEditorController extends ChangeNotifier {
     //----------------//
     final List<String> filters = [crop, scaleInstruction, rotation];
     filters.removeWhere((item) => item.isEmpty);
-    final String filter =
-        filters.isNotEmpty ? "-filter:v " + filters.join(",") : "";
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
     final String execute = "-i \'$_coverPath\' $filter -y $outputPath";
 
     //------------------//
