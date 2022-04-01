@@ -11,15 +11,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  path: ^1.8.0
-  path_provider: ^2.0.2
+    
+  ffmpeg_kit_flutter_min_gpl: ^4.5.1
+  path_provider: ^2.0.9
   video_player:
     git:
       url: https://github.com/spynai/ios_video_player.git
-  video_thumbnail: ^0.4.3
-
-  ffmpeg_kit_flutter_min_gpl: ^4.5.1
-  path_provider: ^2.0.9
-  video_player: ^2.3.0
   video_thumbnail: ^0.5.0
   path: ^1.8.0 # update to `1.8.1` causes #79
