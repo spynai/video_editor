@@ -1,3 +1,30 @@
+## [1.4.1]
+
+- Generated thumbnails list is not cleared after an exception [#88](https://github.com/seel-channel/video_editor/pull/88)
+
+## [1.4.0]
+
+- Fix crop grid : gesture, aspect ratio, and painting area [#87](https://github.com/seel-channel/video_editor/pull/87)
+- [MAJOR INTERNAL CROP CHANGES]
+  - The aspect ratio is resizing the crop area differently depending of the current crop ratio
+  - The crop rect is updated using `Rect.LTRB`
+  - The crop area gesture is detected differently
+  - The crop paint area is diplayed using `Path.combine`
+
+## [1.3.1]
+
+- Implements flutter_lints configuration [#86](https://github.com/seel-channel/video_editor/issues/86)
+- [NEW] Exportation progress value is returned in `onProgress` function of exportVideo [#85](https://github.com/seel-channel/video_editor/issues/85)
+
+## [1.3.0]
+
+- [BREAKING CHANGE]
+    - In TrimTimeline, `secondGap` param is no more nullable
+    - In TrimSliderStyle, positionlineWidth param is renamed `positionLineWidth`
+    - In CoverSelection, nbSelection param is renamed `quantity`
+- Improve package documentation [#84](https://github.com/seel-channel/video_editor/issues/84)
+- Switch from LTS FFmpeg package to Main release [#81](https://github.com/seel-channel/video_editor/issues/81) by [@adigladi](https://github.com/adigladi)
+
 ## [1.2.5]
 
 - Upgraded `video_thumbnail` dependency
@@ -6,8 +33,8 @@
 ## [1.2.4]
 
 - Updated dependencies
-- Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/seel-channel/video_editor/pull/76)
-- Fix an error at extraction if the destination path contains a space [#74](https://github.com/seel-channel/video_editor/pull/74)
+- Add `isFiltersEnabled` param to disable all changes at extraction [#76](https://github.com/seel-channel/video_editor/pull/76) by [@AlexSmirnov9107](https://github.com/AlexSmirnov9107)
+- Fix an error at extraction if the destination path contains a space [#74](https://github.com/seel-channel/video_editor/pull/74) by [@rgplvr](https://github.com/rgplvr)
 
 ## [1.2.3]
 

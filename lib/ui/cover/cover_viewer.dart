@@ -6,17 +6,17 @@ import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
 
 class CoverViewer extends StatefulWidget {
-  ///It is the viewer that allows you to crop the video
-  CoverViewer({
+  /// It is the viewer that show the selected cover
+  const CoverViewer({
     Key? key,
     required this.controller,
     this.noCoverText = 'No selection',
   }) : super(key: key);
 
-  ///Essential argument for the functioning of the Widget
+  /// The [controller] param is mandatory so every change in the controller settings will propagate the crop parameters in the cover view
   final VideoEditorController controller;
 
-  ///Text to display instead of the cover if selected cover data is `null`
+  /// The [noCoverText] param specifies the text to display when selectedCover is `null`
   final String noCoverText;
 
   @override
@@ -25,9 +25,8 @@ class CoverViewer extends StatefulWidget {
 
 class _CoverViewerState extends State<CoverViewer> {
   final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  final ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   Size _layout = Size.zero;
 
@@ -63,8 +62,9 @@ class _CoverViewerState extends State<CoverViewer> {
   }
 
   void _checkIfCoverIsNull() {
-    if (widget.controller.selectedCoverVal!.thumbData == null)
+    if (widget.controller.selectedCoverVal!.thumbData == null) {
       widget.controller.generateDefaultCoverThumnail();
+    }
   }
 
   //-----------//

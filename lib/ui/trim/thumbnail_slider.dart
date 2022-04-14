@@ -8,16 +8,17 @@ import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class ThumbnailSlider extends StatefulWidget {
-  ThumbnailSlider({
+  const ThumbnailSlider({
+    Key? key,
     required this.controller,
     this.height = 60,
     this.quality = 10,
-  });
+  }) : super(key: key);
 
-  ///MAX QUALITY IS 100 - MIN QUALITY IS 0
+  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
 
-  ///THUMBNAIL HEIGHT
+  /// The [height] param specifies the height of the generated thumbnails
   final double height;
 
   final VideoEditorController controller;
@@ -27,16 +28,15 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
 
   Size _layout = Size.zero;
-  Stream<List<Uint8List>>? _stream;
+  late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
 
   @override
   void initState() {
@@ -75,14 +75,18 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final double eachPart = duration / _thumbnails;
     List<Uint8List> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
-      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
-        video: path,
-        timeMs: (eachPart * i).toInt(),
-        quality: widget.quality,
-      );
-      if (_bytes != null) {
-        _byteList.add(_bytes);
+      try {
+        final Uint8List? _bytes = await VideoThumbnail.thumbnailData(
+          imageFormat: ImageFormat.JPEG,
+          video: path,
+          timeMs: (eachPart * i).toInt(),
+          quality: widget.quality,
+        );
+        if (_bytes != null) {
+          _byteList.add(_bytes);
+        }
+      } catch (e) {
+        debugPrint(e.toString());
       }
 
       yield _byteList;
@@ -114,7 +118,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
-        _stream = _generateThumbnails();
         _rect.value = _calculateTrimRect();
       }
 
@@ -126,7 +129,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
               ? ListView.builder(
                   scrollDirection: Axis.horizontal,
                   padding: EdgeInsets.zero,
-                  physics: NeverScrollableScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: data!.length,
                   itemBuilder: (_, int index) {
                     return ValueListenableBuilder(
@@ -160,7 +163,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                     );
                   },
                 )
-              : SizedBox();
+              : const SizedBox();
         },
       );
     });
