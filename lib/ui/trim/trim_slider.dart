@@ -16,7 +16,9 @@ class TrimSlider extends StatefulWidget {
       this.quality = 10,
       this.width,
       this.horizontalMargin = 0.0,
-      this.child})
+      this.child,
+      this.onLoaded,
+      this.onLoading})
       : super(key: key);
 
   ///**Quality of thumbnails:** 0 is the worst quality and 100 is the highest quality.
@@ -36,6 +38,9 @@ class TrimSlider extends StatefulWidget {
 
   ///A widget displayed under the trimmer slider
   final Widget? child;
+
+  final VoidCallback? onLoaded;
+  final VoidCallback? onLoading;
 
   @override
   _TrimSliderState createState() => _TrimSliderState();
@@ -253,6 +258,12 @@ class _TrimSliderState extends State<TrimSlider>
                             child: ThumbnailSlider(
                                 controller: widget.controller,
                                 height: widget.height,
+                                onLoaded: () {
+                                  widget.onLoaded!();
+                                },
+                                onLoading: () {
+                                  widget.onLoading!();
+                                },
                                 width: kIsWeb ? widget.width : null,
                                 quality: widget.quality)),
                         if (widget.child != null)

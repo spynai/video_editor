@@ -11,12 +11,13 @@ import 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web_dummy.dart'
     if (dart.library.html) 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web.dart';
 
 class ThumbnailSlider extends StatefulWidget {
-  ThumbnailSlider({
-    required this.controller,
-    this.height = 60,
-    this.quality = 10,
-    this.width,
-  });
+  ThumbnailSlider(
+      {required this.controller,
+      this.height = 60,
+      this.quality = 10,
+      this.width,
+      this.onLoaded,
+      this.onLoading});
 
   ///MAX QUALITY IS 100 - MIN QUALITY IS 0
   final int quality;
@@ -28,6 +29,9 @@ class ThumbnailSlider extends StatefulWidget {
   final double? width;
 
   final VideoEditorController controller;
+
+  final VoidCallback? onLoaded;
+  final VoidCallback? onLoading;
 
   @override
   _ThumbnailSliderState createState() => _ThumbnailSliderState();
@@ -45,6 +49,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   Size _layout = Size.zero;
   Stream<List<Uint8List>>? _stream;
   Stream<List<String>>? _streamWeb;
+  bool isThumNailLoaded = false;
 
   @override
   void initState() {
@@ -100,6 +105,8 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   Stream<List<String>> _generateThumbnailsForWeb() async* {
     print('_generateThumbnailsForWeb');
     try {
+      isThumNailLoaded = false;
+      widget.onLoading!();
       final String path = widget.controller.file.path;
       final int duration = widget.controller.video.value.duration.inSeconds;
       final double eachPart = duration / _thumbnails;
@@ -116,6 +123,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         var result = value as String;
         temp.add(result);
         yield temp;
+        if (i == _thumbnails) {
+          isThumNailLoaded = true;
+          widget.onLoaded!();
+        }
       }
     } catch (e) {
       print('_generateThumbnailsForWeb error');
@@ -149,7 +160,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
         print("thump nail size $_thumbnails");
-        if (kIsWeb) {
+        if (kIsWeb && !isThumNailLoaded) {
           _streamWeb = _generateThumbnailsForWeb();
         } else {
           _stream = _generateThumbnails();
