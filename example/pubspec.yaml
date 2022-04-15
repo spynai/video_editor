@@ -14,47 +14,18 @@ dependencies:
   video_editor:
     path: ../
 
-  helpers: ^1.1.1
-  image_picker: ^0.8.4
-  cupertino_icons: ^1.0.2
+  helpers: ^1.1.4
+  image_picker: ^0.8.5
+  cupertino_icons: ^1.0.4
   video_player:
     git:
       url: https://github.com/spynai/ios_video_player.git
+
+flutter:
+  uses-material-design: true
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-flutter:
-  uses-material-design: true
-
-  
-  
-  
-  
-
-  
-  
-
-  
-  
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  flutter_lints: ^1.0.4

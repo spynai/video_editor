@@ -19,10 +19,10 @@ class ThumbnailSlider extends StatefulWidget {
       this.onLoaded,
       this.onLoading});
 
-  ///MAX QUALITY IS 100 - MIN QUALITY IS 0
+  /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
 
-  ///THUMBNAIL HEIGHT
+  /// The [height] param specifies the height of the generated thumbnails
   final double height;
 
   ///PAGE Width
@@ -38,18 +38,16 @@ class ThumbnailSlider extends StatefulWidget {
 }
 
 class _ThumbnailSliderState extends State<ThumbnailSlider> {
-  ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
-  ValueNotifier<TransformData> _transform = ValueNotifier<TransformData>(
-    TransformData(rotation: 0.0, scale: 1.0, translate: Offset.zero),
-  );
+  final ValueNotifier<Rect> _rect = ValueNotifier<Rect>(Rect.zero);
+  final ValueNotifier<TransformData> _transform =
+      ValueNotifier<TransformData>(TransformData());
 
   double _aspect = 1.0, _width = 1.0;
   int _thumbnails = 8;
 
   Size _layout = Size.zero;
-  Stream<List<Uint8List>>? _stream;
-  Stream<List<String>>? _streamWeb;
-  bool isThumNailLoaded = false;
+  late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
+  late final Stream<List<String>>? _streamWeb;
 
   @override
   void initState() {
@@ -61,8 +59,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     WidgetsBinding.instance!.addPostFrameCallback((_) {
       _scaleRect();
     });
-
     super.initState();
+    if (kIsWeb) {
+      _streamWeb = _generateThumbnailsForWeb();
+    }
   }
 
   @override
@@ -88,14 +88,18 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     final double eachPart = duration / _thumbnails;
     List<Uint8List> _byteList = [];
     for (int i = 1; i <= _thumbnails; i++) {
-      Uint8List? _bytes = await VideoThumbnail.thumbnailData(
-        imageFormat: ImageFormat.JPEG,
-        video: path,
-        timeMs: (eachPart * i).toInt(),
-        quality: widget.quality,
-      );
-      if (_bytes != null) {
-        _byteList.add(_bytes);
+      try {
+        final Uint8List? _bytes = await VideoThumbnail.thumbnailData(
+          imageFormat: ImageFormat.JPEG,
+          video: path,
+          timeMs: (eachPart * i).toInt(),
+          quality: widget.quality,
+        );
+        if (_bytes != null) {
+          _byteList.add(_bytes);
+        }
+      } catch (e) {
+        debugPrint(e.toString());
       }
 
       yield _byteList;
@@ -103,9 +107,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
   }
 
   Stream<List<String>> _generateThumbnailsForWeb() async* {
-    print('_generateThumbnailsForWeb');
+    if (kDebugMode) {
+      print('_generateThumbnailsForWeb');
+    }
     try {
-      isThumNailLoaded = false;
       widget.onLoading!();
       final String path = widget.controller.file.path;
       final int duration = widget.controller.video.value.duration.inSeconds;
@@ -124,13 +129,14 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         temp.add(result);
         yield temp;
         if (i == _thumbnails) {
-          isThumNailLoaded = true;
           widget.onLoaded!();
         }
       }
     } catch (e) {
-      print('_generateThumbnailsForWeb error');
-      print(e);
+      if (kDebugMode) {
+        print('_generateThumbnailsForWeb error');
+        print(e);
+      }
     }
   }
 
@@ -159,12 +165,6 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
         _thumbnails = (_width ~/ _layout.width) + 1;
-        print("thump nail size $_thumbnails");
-        if (kIsWeb && !isThumNailLoaded) {
-          _streamWeb = _generateThumbnailsForWeb();
-        } else {
-          _stream = _generateThumbnails();
-        }
         _rect.value = _calculateTrimRect();
       }
 
@@ -222,7 +222,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                     ? ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: EdgeInsets.zero,
-                        physics: NeverScrollableScrollPhysics(),
+                        physics: const NeverScrollableScrollPhysics(),
                         itemCount: data!.length,
                         itemBuilder: (_, int index) {
                           return ValueListenableBuilder(
@@ -256,7 +256,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
                           );
                         },
                       )
-                    : SizedBox();
+                    : const SizedBox();
               },
             );
     });
