@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
@@ -7,21 +8,27 @@ import 'package:video_editor/ui/trim/trim_slider_painter.dart';
 enum _TrimBoundaries { left, right, inside, progress, none }
 
 class TrimSlider extends StatefulWidget {
-  /// Slider that trim video length.
-  const TrimSlider({
-    Key? key,
-    required this.controller,
-    this.height = 60,
-    this.quality = 10,
-    this.horizontalMargin = 0.0,
-    this.child,
-  }) : super(key: key);
+  ///Slider that trim video length.
+  TrimSlider(
+      {Key? key,
+      required this.controller,
+      this.height = 60,
+      this.quality = 10,
+      this.horizontalMargin = 0.0,
+      this.child,
+      this.width,
+      this.onLoaded,
+      this.onLoading})
+      : super(key: key);
 
   /// The [controller] param is mandatory so every change in the controller settings will propagate in the trim slider view
   final VideoEditorController controller;
 
   /// The [height] param specifies the height of the generated thumbnails
   final double height;
+
+  ///It is the width of the page
+  final double? width;
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100 (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
@@ -32,6 +39,9 @@ class TrimSlider extends StatefulWidget {
 
   /// The [child] param can be specify to display a widget below this one (e.g: [TrimTimeline])
   final Widget? child;
+
+  final VoidCallback? onLoaded;
+  final VoidCallback? onLoading;
 
   @override
   _TrimSliderState createState() => _TrimSliderState();
@@ -256,6 +266,13 @@ class _TrimSliderState extends State<TrimSlider>
                             child: ThumbnailSlider(
                                 controller: widget.controller,
                                 height: widget.height,
+                                onLoaded: () {
+                                  widget.onLoaded!();
+                                },
+                                onLoading: () {
+                                  widget.onLoading!();
+                                },
+                                width: kIsWeb ? widget.width : null,
                                 quality: widget.quality)),
                         if (widget.child != null)
                           SizedBox(

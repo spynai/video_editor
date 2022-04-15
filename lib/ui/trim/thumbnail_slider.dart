@@ -1,19 +1,23 @@
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/bloc/controller.dart';
 import 'package:video_editor/domain/entities/transform_data.dart';
 import 'package:video_editor/ui/crop/crop_grid_painter.dart';
 import 'package:video_editor/ui/transform.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web_dummy.dart'
+    if (dart.library.html) 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web.dart';
 
 class ThumbnailSlider extends StatefulWidget {
-  const ThumbnailSlider({
-    Key? key,
-    required this.controller,
-    this.height = 60,
-    this.quality = 10,
-  }) : super(key: key);
+  ThumbnailSlider(
+      {required this.controller,
+      this.height = 60,
+      this.quality = 10,
+      this.width,
+      this.onLoaded,
+      this.onLoading});
 
   /// The [quality] param specifies the quality of the generated thumbnails, from 0 to 100, (([more info](https://pub.dev/packages/video_thumbnail)))
   final int quality;
@@ -21,7 +25,13 @@ class ThumbnailSlider extends StatefulWidget {
   /// The [height] param specifies the height of the generated thumbnails
   final double height;
 
+  ///PAGE Width
+  final double? width;
+
   final VideoEditorController controller;
+
+  final VoidCallback? onLoaded;
+  final VoidCallback? onLoading;
 
   @override
   _ThumbnailSliderState createState() => _ThumbnailSliderState();
@@ -37,6 +47,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
 
   Size _layout = Size.zero;
   late final Stream<List<Uint8List>> _stream = (() => _generateThumbnails())();
+  late final Stream<List<String>>? _streamWeb;
 
   @override
   void initState() {
@@ -48,8 +59,10 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     WidgetsBinding.instance!.addPostFrameCallback((_) {
       _scaleRect();
     });
-
     super.initState();
+    if (kIsWeb) {
+      _streamWeb = _generateThumbnailsForWeb();
+    }
   }
 
   @override
@@ -93,6 +106,40 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     }
   }
 
+  Stream<List<String>> _generateThumbnailsForWeb() async* {
+    if (kDebugMode) {
+      print('_generateThumbnailsForWeb');
+    }
+    try {
+      widget.onLoading!();
+      final String path = widget.controller.file.path;
+      final int duration = widget.controller.video.value.duration.inSeconds;
+      final double eachPart = duration / _thumbnails;
+      List<String> temp = List<String>.empty(growable: true);
+      for (int i = 1; i <= _thumbnails; i++) {
+        var frameTimeStamp = eachPart * i;
+        var frameOutputFilename =
+            '${DateTime.now().millisecondsSinceEpoch}frameExtracted.png';
+        dynamic value = await Ffmpegkitweb.executeAsync(
+            "filename.mp4",
+            path,
+            '-ss $frameTimeStamp -frames:v 1 $frameOutputFilename',
+            frameOutputFilename);
+        var result = value as String;
+        temp.add(result);
+        yield temp;
+        if (i == _thumbnails) {
+          widget.onLoaded!();
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('_generateThumbnailsForWeb error');
+        print(e);
+      }
+    }
+  }
+
   Rect _calculateTrimRect() {
     final Offset min = widget.controller.minCrop;
     final Offset max = widget.controller.maxCrop;
@@ -113,7 +160,7 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
     return LayoutBuilder(builder: (_, box) {
       final double width = box.maxWidth;
       if (_width != width) {
-        _width = width;
+        _width = kIsWeb ? widget.width! : width;
         _layout = _aspect <= 1.0
             ? Size(widget.height * _aspect, widget.height)
             : Size(widget.height, widget.height / _aspect);
@@ -121,51 +168,97 @@ class _ThumbnailSliderState extends State<ThumbnailSlider> {
         _rect.value = _calculateTrimRect();
       }
 
-      return StreamBuilder(
-        stream: _stream,
-        builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
-          final data = snapshot.data;
-          return snapshot.hasData
-              ? ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: EdgeInsets.zero,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: data!.length,
-                  itemBuilder: (_, int index) {
-                    return ValueListenableBuilder(
-                      valueListenable: _transform,
-                      builder: (_, TransformData transform, __) {
-                        return CropTransform(
-                          transform: transform,
-                          child: Container(
-                            alignment: Alignment.center,
-                            height: _layout.height,
-                            width: _layout.width,
-                            child: Stack(children: [
-                              Image(
-                                image: MemoryImage(data[index]),
-                                width: _layout.width,
-                                height: _layout.height,
-                                alignment: Alignment.topLeft,
-                              ),
-                              CustomPaint(
-                                size: _layout,
-                                painter: CropGridPainter(
-                                  _rect.value,
-                                  showGrid: false,
-                                  style: widget.controller.cropStyle,
+      return kIsWeb
+          ? StreamBuilder(
+              stream: _streamWeb,
+              builder: (_, AsyncSnapshot<List<String>> snapshot) {
+                final data = snapshot.data;
+                return snapshot.hasData
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        physics: NeverScrollableScrollPhysics(),
+                        itemCount: data!.length,
+                        itemBuilder: (_, int index) {
+                          return ValueListenableBuilder(
+                            valueListenable: _transform,
+                            builder: (_, TransformData transform, __) {
+                              return CropTransform(
+                                transform: transform,
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: _layout.height,
+                                  width: _layout.width,
+                                  child: Stack(children: [
+                                    Image(
+                                      image: NetworkImage(data[index]),
+                                      width: _layout.width,
+                                      height: _layout.height,
+                                      alignment: Alignment.topLeft,
+                                    ),
+                                    CustomPaint(
+                                      size: _layout,
+                                      painter: CropGridPainter(
+                                        _rect.value,
+                                        showGrid: false,
+                                        style: widget.controller.cropStyle,
+                                      ),
+                                    ),
+                                  ]),
                                 ),
-                              ),
-                            ]),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                )
-              : const SizedBox();
-        },
-      );
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : SizedBox();
+              },
+            )
+          : StreamBuilder(
+              stream: _stream,
+              builder: (_, AsyncSnapshot<List<Uint8List>> snapshot) {
+                final data = snapshot.data;
+                return snapshot.hasData
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: EdgeInsets.zero,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: data!.length,
+                        itemBuilder: (_, int index) {
+                          return ValueListenableBuilder(
+                            valueListenable: _transform,
+                            builder: (_, TransformData transform, __) {
+                              return CropTransform(
+                                transform: transform,
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  height: _layout.height,
+                                  width: _layout.width,
+                                  child: Stack(children: [
+                                    Image(
+                                      image: MemoryImage(data[index]),
+                                      width: _layout.width,
+                                      height: _layout.height,
+                                      alignment: Alignment.topLeft,
+                                    ),
+                                    CustomPaint(
+                                      size: _layout,
+                                      painter: CropGridPainter(
+                                        _rect.value,
+                                        showGrid: false,
+                                        style: widget.controller.cropStyle,
+                                      ),
+                                    ),
+                                  ]),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      )
+                    : const SizedBox();
+              },
+            );
     });
   }
 }

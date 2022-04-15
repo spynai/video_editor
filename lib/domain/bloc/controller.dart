@@ -4,6 +4,9 @@ import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit_config.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffprobe_kit.dart';
 import 'package:ffmpeg_kit_flutter_min_gpl/statistics.dart';
+import 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web_dummy.dart'
+    if (dart.library.html) 'package:ffmpeg_kit_flutter_web/ffmpeg_kit_flutter_web.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -68,7 +71,9 @@ class VideoEditorController extends ChangeNotifier {
     TrimSliderStyle? trimStyle,
     CoverSelectionStyle? coverStyle,
     CropGridStyle? cropStyle,
-  })  : _video = VideoPlayerController.file(file),
+  })  : _video = kIsWeb
+            ? VideoPlayerController.network(file.path)
+            : VideoPlayerController.file(file),
         _maxDuration = maxDuration ?? Duration.zero,
         cropStyle = cropStyle ?? CropGridStyle(),
         coverStyle = coverStyle ?? CoverSelectionStyle(),
@@ -506,9 +511,79 @@ class VideoEditorController extends ChangeNotifier {
     );
   }
 
-  /// Convert [VideoExportPreset] to ffmpeg preset as a [String], [More info about presets](https://trac.ffmpeg.org/wiki/Encode/H.264)
+  //------------//
+  //VIDEO EXPORT//
+  //------------//
+
+  ///Export the video using this edition parameters and return a `File`.
   ///
-  /// Return [String] in `-preset xxx` format
+  ///If the [name] is `null`, then it uses this video filename.
+  ///
+  ///If the [outDir] is `null`, then it uses `TemporaryDirectory`.
+  ///
+  ///The [format] of the video to be exported, by default `mp4`.
+  ///
+  ///The [scale] is `scale=width*scale:height*scale` and reduce or increase video size.
+  ///
+  ///The [onProgress] is called while the video is exporting. This argument is usually used to update the export progress percentage.
+  ///
+  ///The [preset] is the `compress quality` **(Only available on min-gpl-lts package)**.
+  ///A slower preset will provide better compression (compression is quality per filesize).
+  ///**More info about presets**:  https://ffmpeg.org/ffmpeg-formats.htmlhttps://trac.ffmpeg.org/wiki/Encode/H.264
+  Future<void> exportVideoWeb({
+    required void Function(File? file, String name) onCompleted,
+    String? name,
+    String? outDir,
+    String format = "mp4",
+    double scale = 1.0,
+    String? customInstruction,
+    void Function(Statistics)? onProgress,
+    VideoExportPreset preset = VideoExportPreset.none,
+    bool isFiltersEnabled = true,
+  }) async {
+    final String videoPath = file.path;
+    if (name == null) name = path.basenameWithoutExtension(videoPath);
+    print("minTrim $minTrim");
+    print("maxTrim $maxTrim");
+    //-----------------//
+    //CALCULATE FILTERS//
+    //-----------------//
+    final String gif = format != "gif" ? "" : "fps=10 -loop 0";
+    final String trim = minTrim >= _min.dx && maxTrim <= _max.dx
+        ? "-ss $_trimStart -to $_trimEnd"
+        : "";
+    final String crop =
+        minCrop >= _min && maxCrop <= _max ? await _getCrop() : "";
+    print("crop");
+    print(crop);
+    final String rotation =
+        _rotation >= 360 || _rotation <= 0 ? "" : _getRotation();
+    final String scaleInstruction =
+        scale == 1.0 ? "" : "scale=iw*$scale:ih*$scale";
+
+    //----------------//
+    //VALIDATE FILTERS//
+    //----------------//
+    final List<String> filters = [crop, scaleInstruction, rotation, gif];
+    filters.removeWhere((item) => item.isEmpty);
+    final String filter = filters.isNotEmpty && isFiltersEnabled
+        ? "-filter:v " + filters.join(",")
+        : "";
+    final String execute =
+        "${customInstruction ?? ""} $filter ${_getPreset(preset)} $trim -y output.mp4";
+
+    //------------------//
+    //PROGRESS CALLBACKS//
+    //------------------//
+    dynamic value =
+        await Ffmpegkitweb.executeAsync(name, file.path, execute, 'output.mp4');
+    String result = value as String;
+    print("output path ${result}");
+    if (result.isNotEmpty) {
+      onCompleted(File(result), name);
+    }
+  }
+
   String _getPreset(VideoExportPreset preset) {
     String? newPreset = "";
 

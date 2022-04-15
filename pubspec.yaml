@@ -14,10 +14,16 @@ dependencies:
 
   ffmpeg_kit_flutter_min_gpl: ^4.5.1
   path_provider: ^2.0.9
-  video_player: ^2.3.0
+  # video_player: ^2.3.0
   video_player:
     git:
       url: https://github.com/spynai/ios_video_player.git
+  video_thumbnail: ^0.4.3
+  ffmpeg_kit_flutter_web:
+    git: 
+      url: https://github.com/spynai/ffmpeg-kit.git
+      ref: web
+      path: flutter/ffmpeg_kit_flutter_web
   path: ^1.8.0 # update to `1.8.1` causes #79
 
 dev_dependencies:
