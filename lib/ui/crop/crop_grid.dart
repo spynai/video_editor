@@ -139,7 +139,7 @@ class _CropGridViewerState extends State<CropGridViewer> {
       final _w = _layout.height /
           (_preferredCropAspectRatio ?? (_rectWidth / _rectHeight));
       _newCrop = Rect.fromLTWH(
-        _newCrop.left.clamp(0, _layout.width - _w),
+        _newCrop.left.clamp(0, _layout.width - _w).toDouble(),
         0.0,
         _w,
         _layout.height,
