@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_editor/domain/entities/crop_style.dart';
 
@@ -25,24 +26,62 @@ class CropGridPainter extends CustomPainter {
   void _drawBackground(Canvas canvas, Size size) {
     final Paint paint = Paint()
       ..color = showGrid ? style!.croppingBackground : style!.background;
+    if (!kIsWeb) {
+      // when scaling, the positions might not be exactly accurates
+      // so add an extra margin to be sure to overlay all video
+      final _margin = showGrid ? 0.0 : 1.0;
 
-    // when scaling, the positions might not be exactly accurates
-    // so add an extra margin to be sure to overlay all video
-    final _margin = showGrid ? 0.0 : 1.0;
+      // extract [rect] area from the canvas
+      canvas.drawPath(
+        Path.combine(
+          PathOperation.difference,
+          Path()
+            ..addRect(Rect.fromLTWH(-_margin, -_margin,
+                size.width + _margin * 2, size.height + _margin * 2)),
+          Path()
+            ..addRect(rect)
+            ..close(),
+        ),
+        paint,
+      );
+    } else {
+      double _width = size.width;
+      double _height = size.height;
+      double _bottom = rect.bottom;
+      double _top = rect.top;
+      double _left = rect.left;
+      double _right = rect.right;
 
-    // extract [rect] area from the canvas
-    canvas.drawPath(
-      Path.combine(
-        PathOperation.difference,
-        Path()
-          ..addRect(Rect.fromLTWH(-_margin, -_margin, size.width + _margin * 2,
-              size.height + _margin * 2)),
-        Path()
-          ..addRect(rect)
-          ..close(),
-      ),
-      paint,
-    );
+      // when scaling, the positions might not be accurates
+      // so add an extra margin to avoid spaces between overlay
+      final _margin = showGrid ? 0.0 : 1.0;
+
+      //TOP
+      canvas.drawRect(
+        Rect.fromLTWH(-_margin, -_margin, _width + _margin * 2, _top),
+        paint,
+      );
+      //BOTTOM
+      canvas.drawRect(
+        Rect.fromPoints(
+          Offset(-_margin, _bottom),
+          Offset(_width + _margin, _height + _margin),
+        ),
+        paint,
+      );
+      //LEFT
+      canvas.drawRect(
+        Rect.fromPoints(Offset(-_margin, _top - _margin * 2),
+            Offset(_left, _bottom + _margin)),
+        paint,
+      );
+      //RIGHT
+      canvas.drawRect(
+        Rect.fromPoints(Offset(_right, _top - _margin * 2),
+            Offset(_width + _margin * 2, _bottom + _margin)),
+        paint,
+      );
+    }
   }
 
   void _drawGrid(Canvas canvas, Size size) {
