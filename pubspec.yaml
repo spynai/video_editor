@@ -13,8 +13,7 @@ dependencies:
     sdk: flutter
 
   ffmpeg_kit_flutter_min_gpl: ^4.5.1
-<<<<<<< HEAD
-  path_provider: ^2.0.9
+  path_provider: ^2.0.10
   # video_player: ^2.3.0
   video_player:
     git:
@@ -25,19 +24,10 @@ dependencies:
       url: https://github.com/spynai/ffmpeg-kit.git
       ref: web
       path: flutter/ffmpeg_kit_flutter_web
-=======
-  path_provider: ^2.0.10
-  video_player: ^2.4.2
-  video_thumbnail: ^0.5.0
->>>>>>> upstream/master
   path: ^1.8.0 # update to `1.8.1` causes #79
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
-<<<<<<< HEAD
   flutter_lints: ^1.0.4
-=======
-  flutter_lints: ^2.0.1
->>>>>>> upstream/master
