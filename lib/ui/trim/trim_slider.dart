@@ -114,6 +114,7 @@ class _TrimSliderState extends State<TrimSlider>
         if (pos.dx > widget.horizontalMargin &&
             pos.dx < _rect.right - _trimWidth * 2) {
           _changeTrimRect(left: pos.dx, width: _rect.width - delta.dx);
+          _controllerSeekTo(pos.dx);
         }
         break;
       case _TrimBoundaries.right:
@@ -122,6 +123,7 @@ class _TrimSliderState extends State<TrimSlider>
         if (pos.dx < _trimLayout.width + widget.horizontalMargin &&
             pos.dx > _rect.left + _trimWidth * 2) {
           _changeTrimRect(width: _rect.width + delta.dx);
+          _controllerSeekTo(pos.dx - 20);
         }
         break;
       case _TrimBoundaries.inside:
@@ -155,7 +157,7 @@ class _TrimSliderState extends State<TrimSlider>
       _updateControllerIsTrimming(false);
       if (_boundary.value != _TrimBoundaries.progress) {
         if (_boundary.value != _TrimBoundaries.right) {
-          _controllerSeekTo(_rect.left);
+          // _controllerSeekTo(_rect.left);
         }
         _updateControllerTrim();
       }
@@ -283,7 +285,7 @@ class _TrimSliderState extends State<TrimSlider>
                 _updateControllerIsTrimming(true);
                 if (notification is ScrollEndNotification) {
                   _thumbnailPosition = notification.metrics.pixels;
-                  _controllerSeekTo(_rect.left);
+                  //_controllerSeekTo(_rect.left);
                   _updateControllerIsTrimming(false);
                   _updateControllerTrim();
                 }
