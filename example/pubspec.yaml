@@ -20,7 +20,7 @@ dependencies:
   cupertino_icons: ^1.0.4
   video_player:
     git:
-      url: https://github.com/spynai/ios_video_player.git
+      url: https://github.com/spynai/video_player.git
 
 flutter:
   uses-material-design: true
